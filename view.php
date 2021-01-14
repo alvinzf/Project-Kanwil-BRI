@@ -65,7 +65,7 @@ while ($data = mysqli_fetch_array($result)) {
     }
 }
 // echo "<script>alert('Refresh Berhasil');</script>";
-header("Location: http://vyzyz/Dev/index.php");
+header("Location: index.php");
 ?>
 
 // }

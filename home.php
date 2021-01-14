@@ -8,6 +8,14 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
     header("location: index.php");
     exit;
 }
+function get_percentage($a, $b)
+{
+    if ($a > 0) {
+        return round((($b / $a) * 100), 2);
+    } else {
+        return 0;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +58,6 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
         <div class="row">
             <div class="col-md-4" style="max-width:18%;margin-top: 3%;">
                 <div class="list-group" id="list-tab" role="tablist">
-                    <a class="list-group-item list-group-item-action active" href="#list-dash" role="tab" aria-controls="home" data-toggle="list">Dashboard</a>
                     <a class="list-group-item list-group-item-action" href="#upload" id="sec-upload" role="tab" data-toggle="list" aria-controls="home">Upload</a>
                     <a class="list-group-item list-group-item-action" href="#view" id="sec-view" role="tab" data-toggle="list" aria-controls="home"> Lihat Data </a>
 
@@ -58,51 +65,10 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
             </div>
             <div class="col-md-8" style="margin-top: 3%;">
                 <div class="tab-content" id="nav-tabContent" style="width: 950px;">
-                    <div class="tab-pane fade show active" id="list-dash" role="tabpanel" aria-labelledby="list-dash-list">
-
-                        <div class="container-fluid container-fullw bg-white">
-                            <div class="row">
-
-                                <div class="col-sm-4" style="left: 10%">
-                                    <div class="panel panel-white no-radius text-center">
-                                        <div class="panel-body">
-                                            <span class="fa-stack fa-2x"> <i class="fa fa-square fa-stack-2x text-primary"></i> <i class="fa fa-list fa-stack-1x fa-inverse"></i> </span>
-                                            <h4 class="StepTitle" style="margin-top: 5%;"> Upload Data</h4>
-                                            <script>
-                                                function clickDiv(id) {
-                                                    document.querySelector(id).click();
-                                                }
-                                            </script>
-                                            <p class="links cl-effect-1">
-                                                <a href="#upload" onclick="clickDiv('#sec-upload')">
-                                                    Upload Data
-                                                </a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-sm-4" style="left: 15%">
-                                    <div class="panel panel-white no-radius text-center">
-                                        <div class="panel-body">
-                                            <span class="fa-stack fa-2x"> <i class="fa fa-square fa-stack-2x text-primary"></i> <i class="fa fa-list-ul fa-stack-1x fa-inverse"></i> </span>
-                                            <h4 class="StepTitle" style="margin-top: 5%;"> Lihat Data </h4>
-
-                                            <p class="links cl-effect-1">
-                                                <a href="#view" onclick="clickDiv('#sec-view')">
-                                                    Lihat Data
-                                                </a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
 
 
-                    <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="sec-upload">
+
+                    <div class="tab-pane fade show active" id="upload" role="tabpanel" aria-labelledby="sec-upload">
 
                         <div class="container-fluid container-fullw bg-white">
                             <div class="row">
@@ -171,10 +137,13 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
                                 <tr>
 
                                     <th scope=" col">Nama Debitur</th>
-                                    <th scope="col">Total Exposur</th>
-                                    <th scope="col">Total Simpanan</th>
+                                    <th scope="col">Nama AO</th>
+                                    <th scope="col">Plafond Pinjaman</th>
                                     <th scope="col">Syarat Casa</th>
-                                    <th scope="col">Selisih</th>
+                                    <th scope="col">Produk Simpanan</th>
+                                    <th scope="col">Instanding Casa</th>
+                                    <th scope="col">GAP CASA</th>
+                                    <th scope="col">Prosentase</th>
 
                                 </tr>
                             </thead>
@@ -184,16 +153,21 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
                                 require_once('./config.php');
 
                                 $query = "SELECT pcd.nama_debitur, 
-                                pcd.os, 
-                                pcd.syarat_casa, 
-                                sum(s.instanding) as total  
+                                pcd.nama_ao,
+                                pcd.plafond,
+                                pcd.syarat_casa,
+                                s.produk_simpanan,
+                                sum(s.instanding) as total                                  
                                 FROM pemenuhan_casa_debitur pcd 
                                 INNER JOIN simpanan s 
                                 ON pcd.cif = s.cif  
                                 GROUP BY 
                                 pcd.nama_debitur, 
-                                pcd.os, 
-                                pcd.syarat_casa ";
+                                pcd.nama_ao,
+                                pcd.plafond, 
+                                pcd.syarat_casa,
+                                s.produk_simpanan
+                                 ";
 
                                 $result = mysqli_query($mysqli, $query);
                                 if (!$result) {
@@ -206,19 +180,19 @@ if (!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true) {
                                 ?>
                                     <tr>
                                         <td><?php echo $data['nama_debitur'] ?></td>
-                                        <td><?php echo $data['os'] ?></td>
-                                        <td><?php
-
-
-                                            echo $data['total'] ?></td>
+                                        <td><?php echo $data['nama_ao'] ?></td>
+                                        <td><?php echo $data['plafond'] ?></td>
                                         <td><?php echo $data['syarat_casa'] ?></td>
+                                        <td><?php echo $data['produk_simpanan'] ?></td>
+                                        <td><?php echo $data['total'] ?></td>
                                         <td><?php
                                             $syarat_casa = $data['syarat_casa'];
                                             $total = $data['total'];
                                             $hasil = $total - $syarat_casa;
                                             echo $hasil ?></td>
-                                        <!-- <td><?php //echo $row['waktu']; 
-                                                    ?></td> -->
+                                        <td><?php
+                                            $prosentase = get_percentage($syarat_casa, $total);
+                                            echo "$prosentase%"; ?> </td>
 
                                     </tr>
                                 <?php  }
